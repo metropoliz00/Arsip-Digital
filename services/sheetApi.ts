@@ -3,7 +3,7 @@ import { User, Mail, MailType, Role } from '../types';
 // URL Database Spreadsheet (Google Apps Script Web App URL)
 // GANTI URL DI BAWAH INI DENGAN URL DARI LANGKAH DEPLOY GOOGLE APPS SCRIPT
 // Format URL harus berakhiran '/exec'
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxVxbuIY0BPuqwwCH8TvoUI7xQETewLp5LxG__GRGkO9GknafJUoTdOeuL8ua6YfRPS/exec'; 
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzV1C2ihUKeHhrDlLMS5t-aD54ZwZqPL9x-rU_NOrGb9J5lgyt5joNglU5iQuOEq9du/exec'; 
 
 // Helper function to validate URL
 const isValidScriptUrl = (url: string): boolean => {
@@ -80,12 +80,21 @@ export const sheetApi = {
       });
       
       const text = await res.text();
+      let result;
       try {
-        return JSON.parse(text);
+        result = JSON.parse(text);
       } catch (e) {
         console.warn("Invalid JSON response from server:", text.substring(0, 50));
         throw new Error("Server returned invalid JSON");
       }
+
+      // NORMALISASI ROLE: Pastikan Role menjadi huruf besar (admin -> ADMIN)
+      if (result.success && result.user && result.user.role) {
+        result.user.role = result.user.role.toUpperCase() as Role;
+      }
+      
+      return result;
+
     } catch (error) {
       console.error("Gagal fetch, fallback ke demo:", error);
       // Fallback jika fetch error (misal offline atau CORS block)
@@ -127,7 +136,7 @@ export const sheetApi = {
   },
 
   saveMail: async (mail: Mail, file?: FilePayload): Promise<{ success: boolean; archiveCode?: string; fileLink?: string }> => {
-    if (!isValidScriptUrl(GOOGLE_SCRIPT_URL) || GOOGLE_SCRIPT_URL.includes('https://script.google.com/macros/s/AKfycbxeSrxS9vhoxESS41sk5f_7vk-Ht_yj6Ea0lHDFLi2CtEYURanJODM0G449fI3ZO2fM/exec')) {
+    if (!isValidScriptUrl(GOOGLE_SCRIPT_URL) || GOOGLE_SCRIPT_URL.includes('https://script.google.com/macros/s/AKfycbzV1C2ihUKeHhrDlLMS5t-aD54ZwZqPL9x-rU_NOrGb9J5lgyt5joNglU5iQuOEq9du/exec')) {
       // alert("Mode Demo: Data disimpan sementara di memori browser.");
       return { success: true, archiveCode: mail.archiveCode || 'DEMO-CODE-' + Date.now(), fileLink: file ? 'https://dummy-drive-link.com/file.pdf' : undefined };
     }
