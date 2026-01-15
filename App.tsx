@@ -24,7 +24,8 @@ import {
   PenTool,
   Paperclip,
   AlignLeft,
-  ExternalLink
+  ExternalLink,
+  UploadCloud
 } from 'lucide-react';
 import { Role, Mail, MailType, User } from './types';
 import { sheetApi } from './services/sheetApi'; // Import API Service
@@ -54,6 +55,10 @@ const App: React.FC = () => {
   const [viewingMail, setViewingMail] = useState<Mail | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // State: File Upload
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState('');
 
   // Form State
   const [formData, setFormData] = useState<Partial<Mail>>({
@@ -112,6 +117,8 @@ const App: React.FC = () => {
   // Update: Accepts optional type to force specific form mode
   const handleOpenAdd = (targetType?: MailType) => {
     setEditingMail(null);
+    setSelectedFile(null); // Reset file
+    setFileError('');
     
     // Determine type: use targetType if provided, otherwise infer from current view
     const type = targetType || (currentView === 'OUTGOING' ? MailType.OUTGOING : MailType.INCOMING);
@@ -132,6 +139,8 @@ const App: React.FC = () => {
 
   const handleEdit = (mail: Mail) => {
     setEditingMail(mail);
+    setSelectedFile(null); // Reset file
+    setFileError('');
     setFormData({ ...mail });
     setIsModalOpen(true);
   };
@@ -155,8 +164,41 @@ const App: React.FC = () => {
     setIsViewModalOpen(true);
   };
 
+  // --- HANDLER: FILE UPLOAD ---
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setFileError('');
+    
+    if (file) {
+      // Limit 4MB agar aman dikirim via GAS TextOutput/JSON
+      if (file.size > 4 * 1024 * 1024) {
+        setFileError('Ukuran file maksimal 4MB');
+        setSelectedFile(null);
+        e.target.value = ''; // Reset input
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        // Remove data URL prefix (e.g., "data:application/pdf;base64,")
+        const result = reader.result as string;
+        const base64 = result.split(',')[1]; 
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (fileError) return;
+
     setIsSaving(true);
     
     let mailToSave: Mail;
@@ -177,13 +219,35 @@ const App: React.FC = () => {
       } as Mail;
     }
 
+    // Prepare File Data if exists
+    let filePayload = undefined;
+    if (selectedFile) {
+      try {
+        const base64Content = await convertFileToBase64(selectedFile);
+        filePayload = {
+          name: selectedFile.name,
+          mimeType: selectedFile.type,
+          content: base64Content
+        };
+      } catch (err) {
+        console.error("Gagal convert file", err);
+        alert("Gagal memproses file upload.");
+        setIsSaving(false);
+        return;
+      }
+    }
+
     // Call API
-    const result = await sheetApi.saveMail(mailToSave);
+    const result = await sheetApi.saveMail(mailToSave, filePayload);
 
     if (result.success) {
       // If backend returned a generated code and our local one was empty, update it
       if (result.archiveCode) {
         mailToSave.archiveCode = result.archiveCode;
+      }
+      // If backend returned a file link (from Drive), update it
+      if (result.fileLink) {
+        mailToSave.fileLink = result.fileLink;
       }
 
       if (editingMail) {
@@ -791,24 +855,59 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Section: File & Keterangan (BARU) */}
+          {/* Section: File & Keterangan (BARU - DENGAN UPLOAD) */}
           <div className="border-t border-gray-100 pt-4">
              <div className="grid grid-cols-1 gap-4">
+                
+                {/* FILE UPLOAD INPUT */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Link File Digital (Google Drive/PDF)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Upload File Digital (Google Drive)</label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-brand-400 transition-colors bg-gray-50/50">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                       <div className="p-3 bg-brand-50 text-brand-500 rounded-full">
+                         <UploadCloud size={24} />
+                       </div>
+                       <div className="text-center">
+                         <label htmlFor="file-upload" className="cursor-pointer font-medium text-brand-600 hover:text-brand-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-500">
+                           <span>Klik untuk upload</span>
+                           <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                         </label>
+                         <span className="text-gray-500 text-xs"> atau drag file kesini</span>
+                       </div>
+                       <p className="text-xs text-gray-400">PDF, JPG, PNG (Max 4MB)</p>
+                    </div>
+                    {selectedFile && (
+                      <div className="mt-4 flex items-center p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <FileText size={20} className="text-brand-500 mr-3" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</p>
+                          <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(0)} KB</p>
+                        </div>
+                        <button type="button" onClick={() => setSelectedFile(null)} className="text-gray-400 hover:text-red-500">
+                          <XIconSmall />
+                        </button>
+                      </div>
+                    )}
+                    {fileError && <p className="text-xs text-red-500 mt-2 text-center font-medium">{fileError}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Atau Masukkan Link File (Manual)</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                      <Paperclip size={14} />
+                      <LinkIcon size={14} />
                     </div>
                     <input 
                       type="url" 
-                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition-shadow"
+                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition-shadow text-sm"
                       value={formData.fileLink}
                       onChange={e => setFormData({...formData, fileLink: e.target.value})}
-                      placeholder="https://drive.google.com/..."
+                      placeholder="https://..."
+                      readOnly={!!selectedFile} // Readonly if file is selected
                     />
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">Tempel link dokumen yang sudah diupload ke cloud storage.</p>
+                  {selectedFile && <p className="text-xs text-brand-500 mt-1 italic">*Link akan terisi otomatis setelah file terupload.</p>}
                 </div>
                 
                 <div>
@@ -844,7 +943,7 @@ const App: React.FC = () => {
               className="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all flex items-center"
             >
               {isSaving && <Loader2 size={16} className="animate-spin mr-2" />}
-              {editingMail ? 'Perbarui Data' : 'Simpan Arsip'}
+              {isSaving ? (selectedFile ? 'Mengupload...' : 'Menyimpan...') : (editingMail ? 'Perbarui Data' : 'Simpan Arsip')}
             </button>
           </div>
         </form>
@@ -942,5 +1041,10 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+// Small icon component helper
+const XIconSmall = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+)
 
 export default App;

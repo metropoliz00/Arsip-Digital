@@ -53,6 +53,12 @@ const DEMO_MAILS: Mail[] = [
   }
 ];
 
+interface FilePayload {
+  name: string;
+  mimeType: string;
+  content: string; // Base64 encoded string
+}
+
 export const sheetApi = {
   login: async (username: string, password: string): Promise<{ success: boolean; user?: User; message?: string }> => {
     // 1. Cek Mode Demo Eksplisit (URL Default/Invalid)
@@ -120,31 +126,38 @@ export const sheetApi = {
     }
   },
 
-  saveMail: async (mail: Mail): Promise<{ success: boolean; archiveCode?: string }> => {
+  saveMail: async (mail: Mail, file?: FilePayload): Promise<{ success: boolean; archiveCode?: string; fileLink?: string }> => {
     if (!isValidScriptUrl(GOOGLE_SCRIPT_URL) || GOOGLE_SCRIPT_URL.includes('PASTE_YOUR')) {
       // alert("Mode Demo: Data disimpan sementara di memori browser.");
-      return { success: true, archiveCode: mail.archiveCode || 'DEMO-CODE-' + Date.now() };
+      return { success: true, archiveCode: mail.archiveCode || 'DEMO-CODE-' + Date.now(), fileLink: file ? 'https://dummy-drive-link.com/file.pdf' : undefined };
     }
 
     try {
+      // Create request payload
+      const payload: any = { action: 'saveMail', mail };
+      
+      // Attach file data if present
+      if (file) {
+        payload.fileData = file;
+      }
+
       const res = await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         headers: {
             "Content-Type": "text/plain",
         },
-        body: JSON.stringify({ action: 'saveMail', mail }),
+        body: JSON.stringify(payload),
       });
       
       const text = await res.text();
       const data = JSON.parse(text);
       
-      // data.archiveCode will be returned from GAS
-      return { success: data.success, archiveCode: data.archiveCode };
+      // data.archiveCode & fileLink will be returned from GAS
+      return { success: data.success, archiveCode: data.archiveCode, fileLink: data.fileLink };
     } catch (error) {
       console.error("Save error:", error);
-      // Jika error network, kita return true agar UI tidak stuck, tapi data tidak masuk sheet
-      alert("Gagal koneksi ke Spreadsheet (Failed to fetch). Data hanya tersimpan di tampilan sementara.");
-      return { success: true };
+      alert("Gagal koneksi ke Spreadsheet (Failed to fetch).");
+      return { success: false };
     }
   },
 

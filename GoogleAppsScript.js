@@ -6,12 +6,14 @@
  * Update: Struktur Sheet Terpisah (Login, Surat Masuk, Surat Keluar)
  * Ditambah kolom untuk Link File dan Keterangan.
  * Update Terbaru: Auto-generate Kode Arsip Unik & Return Code.
+ * Update Upload: Integrasi DriveApp untuk upload file base64.
  */
 
 // --- KONFIGURASI NAMA SHEET ---
 const SHEET_USERS = "Login";
 const SHEET_INCOMING = "Surat Masuk";
 const SHEET_OUTGOING = "Surat Keluar";
+const FOLDER_NAME = "ArsipPro_Files"; // Nama folder di Google Drive
 
 // --- FUNGSI UTAMA (DO POST) ---
 function doPost(e) {
@@ -31,7 +33,8 @@ function doPost(e) {
     } else if (action === "getMails") {
       result = handleGetMails();
     } else if (action === "saveMail") {
-      result = handleSaveMail(data.mail);
+      // Kirim seluruh data (mail + fileData optional)
+      result = handleSaveMail(data.mail, data.fileData);
     } else if (action === "deleteMail") {
       result = handleDeleteMail(data.id);
     } else {
@@ -150,7 +153,7 @@ function handleGetMails() {
   return { success: true, mails: mails };
 }
 
-function handleSaveMail(mail) {
+function handleSaveMail(mail, fileData) {
   // Hapus data lama jika ID sama (Update mechanism)
   handleDeleteMail(mail.id);
 
@@ -169,6 +172,31 @@ function handleSaveMail(mail) {
     archiveCode = generateUniqueCode();
   }
 
+  // --- HANDLE FILE UPLOAD ---
+  let fileLink = mail.fileLink || "";
+  if (fileData && fileData.content) {
+    try {
+      // Decode Base64
+      const decoded = Utilities.base64Decode(fileData.content);
+      const blob = Utilities.newBlob(decoded, fileData.mimeType, fileData.name);
+      
+      // Get or Create Folder
+      const folder = getOrCreateFolder(FOLDER_NAME);
+      
+      // Create File
+      const file = folder.createFile(blob);
+      
+      // Set Permission (Anyone with link can view)
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      
+      // Get URL
+      fileLink = file.getUrl(); // Atau file.getDownloadUrl() untuk direct download
+    } catch (e) {
+      // Jika upload gagal, kita log errornya tapi tetap simpan data surat
+      console.error("Upload Error: " + e.toString()); 
+    }
+  }
+
   const rowData = [
     mail.id,
     "'" + mail.date,             // Pakai kutip agar format tanggal text terjaga
@@ -177,14 +205,14 @@ function handleSaveMail(mail) {
     mail.subject,
     mail.relatedTo || "-",
     archiveCode,                 // Gunakan kode yang sudah dipastikan ada
-    mail.fileLink || "",
+    fileLink,                    // Link file hasil upload atau input manual
     mail.description || ""
   ];
   
   sheet.appendRow(rowData);
 
-  // Return generated code so frontend can update UI immediately
-  return { success: true, archiveCode: archiveCode };
+  // Return generated code & file link so frontend can update UI immediately
+  return { success: true, archiveCode: archiveCode, fileLink: fileLink };
 }
 
 function handleDeleteMail(id) {
@@ -210,6 +238,16 @@ function handleDeleteMail(id) {
   deleteFromSheet(SHEET_OUTGOING);
 
   return { success: true };
+}
+
+// Helper: Get or Create Drive Folder
+function getOrCreateFolder(folderName) {
+  const folders = DriveApp.getFoldersByName(folderName);
+  if (folders.hasNext()) {
+    return folders.next();
+  } else {
+    return DriveApp.createFolder(folderName);
+  }
 }
 
 // Generate kode arsip unik: ARS-YYYYMMDD-XXXX
