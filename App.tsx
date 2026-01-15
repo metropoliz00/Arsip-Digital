@@ -25,12 +25,18 @@ import {
   Paperclip,
   AlignLeft,
   ExternalLink,
-  UploadCloud
+  UploadCloud,
+  AlertTriangle,
+  HardDrive,
+  Globe,
+  X,
+  Copy
 } from 'lucide-react';
 import { Role, Mail, MailType, User } from './types';
 import { sheetApi } from './services/sheetApi'; // Import API Service
 import { StatCard } from './components/StatCard';
 import { Modal } from './components/Modal';
+import { DatePicker } from './components/DatePicker';
 
 // --- APP COMPONENT ---
 
@@ -51,14 +57,14 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'DASHBOARD' | 'INCOMING' | 'OUTGOING'>('DASHBOARD');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  
+  // State: Drive Integration
+  const [hasOpenedDrive, setHasOpenedDrive] = useState(false);
+
   const [editingMail, setEditingMail] = useState<Mail | null>(null);
   const [viewingMail, setViewingMail] = useState<Mail | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-
-  // State: File Upload
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileError, setFileError] = useState('');
 
   // Form State
   const [formData, setFormData] = useState<Partial<Mail>>({
@@ -117,8 +123,7 @@ const App: React.FC = () => {
   // Update: Accepts optional type to force specific form mode
   const handleOpenAdd = (targetType?: MailType) => {
     setEditingMail(null);
-    setSelectedFile(null); // Reset file
-    setFileError('');
+    setHasOpenedDrive(false); // Reset Drive state
     
     // Determine type: use targetType if provided, otherwise infer from current view
     const type = targetType || (currentView === 'OUTGOING' ? MailType.OUTGOING : MailType.INCOMING);
@@ -139,8 +144,7 @@ const App: React.FC = () => {
 
   const handleEdit = (mail: Mail) => {
     setEditingMail(mail);
-    setSelectedFile(null); // Reset file
-    setFileError('');
+    setHasOpenedDrive(!!mail.fileLink); // If link exists, show input immediately
     setFormData({ ...mail });
     setIsModalOpen(true);
   };
@@ -164,40 +168,17 @@ const App: React.FC = () => {
     setIsViewModalOpen(true);
   };
 
-  // --- HANDLER: FILE UPLOAD ---
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    setFileError('');
+  const handleOpenDrive = () => {
+    // Membuka Google Drive (Folder spesifik atau Root) di Tab Baru
+    // Menggunakan URL Folder dari kode sebelumnya: 1tcMmAVdb14bjGO5bNKUpeSs4TDrz3Fnf
+    window.open('https://drive.google.com/drive/folders/1tcMmAVdb14bjGO5bNKUpeSs4TDrz3Fnf', '_blank');
     
-    if (file) {
-      // Limit 4MB agar aman dikirim via GAS TextOutput/JSON
-      if (file.size > 4 * 1024 * 1024) {
-        setFileError('Ukuran file maksimal 4MB');
-        setSelectedFile(null);
-        e.target.value = ''; // Reset input
-        return;
-      }
-      setSelectedFile(file);
-    }
-  };
-
-  const convertFileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        // Remove data URL prefix (e.g., "data:application/pdf;base64,")
-        const result = reader.result as string;
-        const base64 = result.split(',')[1]; 
-        resolve(base64);
-      };
-      reader.onerror = error => reject(error);
-    });
+    // Trigger UI change: Show URL input
+    setHasOpenedDrive(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (fileError) return;
 
     setIsSaving(true);
     
@@ -219,35 +200,17 @@ const App: React.FC = () => {
       } as Mail;
     }
 
-    // Prepare File Data if exists
-    let filePayload = undefined;
-    if (selectedFile) {
-      try {
-        const base64Content = await convertFileToBase64(selectedFile);
-        filePayload = {
-          name: selectedFile.name,
-          mimeType: selectedFile.type,
-          content: base64Content
-        };
-      } catch (err) {
-        console.error("Gagal convert file", err);
-        alert("Gagal memproses file upload.");
-        setIsSaving(false);
-        return;
-      }
-    }
-
-    // Call API
-    const result = await sheetApi.saveMail(mailToSave, filePayload);
+    // Call API (Without File Payload)
+    const result: any = await sheetApi.saveMail(mailToSave);
 
     if (result.success) {
       // If backend returned a generated code and our local one was empty, update it
       if (result.archiveCode) {
         mailToSave.archiveCode = result.archiveCode;
       }
-      // If backend returned a file link (from Drive), update it
-      if (result.fileLink) {
-        mailToSave.fileLink = result.fileLink;
+      
+      if (result.message && result.message !== "Data tersimpan.") {
+        alert(result.message);
       }
 
       if (editingMail) {
@@ -257,7 +220,7 @@ const App: React.FC = () => {
       }
       setIsModalOpen(false);
     } else {
-      alert("Gagal menyimpan ke database Google Sheet. Pastikan script URL benar.");
+      alert("Gagal menyimpan. " + (result.message || "Pastikan script URL benar."));
     }
     setIsSaving(false);
   };
@@ -387,8 +350,8 @@ const App: React.FC = () => {
         </div>
         
         {/* Footer Credit */}
-        <div className="absolute bottom-6 text-center w-full text-brand-900/40 text-xs font-medium">
-          @ 2026 Dev Dedy Meyga Saputra, S.Pd, M.Pd
+        <div className="absolute bottom-6 text-center w-full text-brand-900/40 text-[10px] font-medium px-4">
+          © 2026 Dev Dedy Meyga Saputra, S.Pd, M.Pd
         </div>
       </div>
     );
@@ -398,7 +361,7 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
+      <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col z-20 shadow-lg md:shadow-none">
         <div className="p-6 flex items-center space-x-3 border-b border-gray-100">
           <div className="bg-brand-600 p-2 rounded-lg text-white shadow-lg shadow-brand-500/30">
             <Send size={24} className="transform -rotate-6" />
@@ -409,7 +372,7 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <button
             onClick={() => setCurrentView('DASHBOARD')}
             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${currentView === 'DASHBOARD' ? 'bg-brand-50 text-brand-600 font-semibold shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}
@@ -438,24 +401,26 @@ const App: React.FC = () => {
             </span>
           </button>
 
-          {/* Sidebar Input Menu - Available for ALL users now */}
-          <div className="pt-2 mt-2 border-t border-gray-100">
-              <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Input Data</p>
-              <button
-              onClick={() => handleOpenAdd(MailType.INCOMING)}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-brand-600 transition-all duration-200"
-              >
-                <Inbox size={20} />
-                <span>Input Surat Masuk</span>
-              </button>
-              <button
-              onClick={() => handleOpenAdd(MailType.OUTGOING)}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-brand-600 transition-all duration-200"
-              >
-                <Send size={20} />
-                <span>Input Surat Keluar</span>
-              </button>
-          </div>
+          {/* Sidebar Input Menu - Available ONLY for ADMIN */}
+          {user.role === Role.ADMIN && (
+            <div className="pt-2 mt-2 border-t border-gray-100">
+                <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Input Data</p>
+                <button
+                onClick={() => handleOpenAdd(MailType.INCOMING)}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-brand-600 transition-all duration-200"
+                >
+                  <Inbox size={20} />
+                  <span>Input Surat Masuk</span>
+                </button>
+                <button
+                onClick={() => handleOpenAdd(MailType.OUTGOING)}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-brand-600 transition-all duration-200"
+                >
+                  <Send size={20} />
+                  <span>Input Surat Keluar</span>
+                </button>
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-gray-100 bg-gray-50/50">
@@ -478,8 +443,10 @@ const App: React.FC = () => {
             <LogOut size={16} />
             <span>Keluar</span>
           </button>
-          <div className="mt-4 text-center text-[10px] text-gray-300 font-medium">
-             @ 2026 Dev Dedy Meyga Saputra, S.Pd, M.Pd
+          <div className="mt-4 text-center px-2">
+             <p className="text-[8px] text-brand-900/40 font-medium leading-tight">
+               © 2026 Dev Dedy Meyga Saputra, S.Pd, M.Pd
+             </p>
           </div>
         </div>
       </aside>
@@ -518,8 +485,8 @@ const App: React.FC = () => {
               </div>
             )}
             
-            {/* Add Button - Visible for ALL users when in specific list views */}
-            {currentView !== 'DASHBOARD' && (
+            {/* Add Button - Visible ONLY for ADMIN */}
+            {currentView !== 'DASHBOARD' && user.role === Role.ADMIN && (
               <button 
                 onClick={() => handleOpenAdd()}
                 className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg shadow-md shadow-brand-500/20 hover:shadow-lg transition-all flex items-center space-x-2"
@@ -544,51 +511,53 @@ const App: React.FC = () => {
           {currentView === 'DASHBOARD' && (
             <div className="space-y-6">
               
-              {/* MENU INPUT ARSIP for ALL USERS */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
-                  {/* Background Decor */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-brand-50 rounded-full mix-blend-multiply filter blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2"></div>
-                  
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center relative z-10">
-                    <div className="bg-brand-100 p-1.5 rounded-lg mr-3 text-brand-600">
-                      <Plus size={20} />
-                    </div>
-                    Menu Input Arsip
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-                    <button 
-                      onClick={() => handleOpenAdd(MailType.INCOMING)}
-                      className="flex items-center p-4 bg-blue-50/50 border border-blue-100 rounded-xl hover:shadow-md hover:bg-blue-50 hover:border-blue-200 group transition-all"
-                    >
-                      <div className="bg-white text-blue-600 p-3 rounded-xl shadow-sm mr-4 group-hover:scale-110 transition-transform">
-                        <Inbox size={24} />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="font-bold text-gray-800 group-hover:text-blue-700 transition-colors">Input Surat Masuk</h3>
-                        <p className="text-sm text-gray-500">Catat arsip surat yang diterima</p>
-                      </div>
-                      <div className="ml-auto bg-white p-2 rounded-full text-gray-300 group-hover:text-blue-600 shadow-sm">
+              {/* MENU INPUT ARSIP for ADMIN ONLY */}
+              {user.role === Role.ADMIN && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
+                    {/* Background Decor */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-brand-50 rounded-full mix-blend-multiply filter blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2"></div>
+                    
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center relative z-10">
+                      <div className="bg-brand-100 p-1.5 rounded-lg mr-3 text-brand-600">
                         <Plus size={20} />
                       </div>
-                    </button>
+                      Menu Input Arsip
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                      <button 
+                        onClick={() => handleOpenAdd(MailType.INCOMING)}
+                        className="flex items-center p-4 bg-blue-50/50 border border-blue-100 rounded-xl hover:shadow-md hover:bg-blue-50 hover:border-blue-200 group transition-all"
+                      >
+                        <div className="bg-white text-blue-600 p-3 rounded-xl shadow-sm mr-4 group-hover:scale-110 transition-transform">
+                          <Inbox size={24} />
+                        </div>
+                        <div className="text-left">
+                          <h3 className="font-bold text-gray-800 group-hover:text-blue-700 transition-colors">Input Surat Masuk</h3>
+                          <p className="text-sm text-gray-500">Catat arsip surat yang diterima</p>
+                        </div>
+                        <div className="ml-auto bg-white p-2 rounded-full text-gray-300 group-hover:text-blue-600 shadow-sm">
+                          <Plus size={20} />
+                        </div>
+                      </button>
 
-                    <button 
-                      onClick={() => handleOpenAdd(MailType.OUTGOING)}
-                      className="flex items-center p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl hover:shadow-md hover:bg-indigo-50 hover:border-indigo-200 group transition-all"
-                    >
-                      <div className="bg-white text-indigo-600 p-3 rounded-xl shadow-sm mr-4 group-hover:scale-110 transition-transform">
-                        <Send size={24} />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="font-bold text-gray-800 group-hover:text-indigo-700 transition-colors">Input Surat Keluar</h3>
-                        <p className="text-sm text-gray-500">Catat arsip surat yang dikirim</p>
-                      </div>
-                      <div className="ml-auto bg-white p-2 rounded-full text-gray-300 group-hover:text-indigo-600 shadow-sm">
-                        <Plus size={20} />
-                      </div>
-                    </button>
-                  </div>
-              </div>
+                      <button 
+                        onClick={() => handleOpenAdd(MailType.OUTGOING)}
+                        className="flex items-center p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl hover:shadow-md hover:bg-indigo-50 hover:border-indigo-200 group transition-all"
+                      >
+                        <div className="bg-white text-indigo-600 p-3 rounded-xl shadow-sm mr-4 group-hover:scale-110 transition-transform">
+                          <Send size={24} />
+                        </div>
+                        <div className="text-left">
+                          <h3 className="font-bold text-gray-800 group-hover:text-indigo-700 transition-colors">Input Surat Keluar</h3>
+                          <p className="text-sm text-gray-500">Catat arsip surat yang dikirim</p>
+                        </div>
+                        <div className="ml-auto bg-white p-2 rounded-full text-gray-300 group-hover:text-indigo-600 shadow-sm">
+                          <Plus size={20} />
+                        </div>
+                      </button>
+                    </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard 
@@ -658,65 +627,65 @@ const App: React.FC = () => {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-gray-50/50 border-b border-gray-100">
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">No. Surat / Tanggal</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Perihal</th>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">No. Surat / Tanggal</th>
+                      <th className="px-3 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Perihal</th>
+                      <th className="px-3 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider min-w-[150px]">
                          {currentView === 'INCOMING' ? 'Diterima Dari' : 'Dikirim Kepada'}
                       </th>
-                      <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kode Arsip</th>
-                      <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
+                      <th className="px-3 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Kode Arsip</th>
+                      <th className="px-3 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {filteredMails.map(mail => (
                       <tr key={mail.id} className="hover:bg-brand-50/30 transition-colors group">
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-gray-800">{mail.referenceNumber}</p>
-                          <p className="text-xs text-gray-500">{mail.date}</p>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <p className="text-xs font-semibold text-gray-800">{mail.referenceNumber}</p>
+                          <p className="text-[10px] text-gray-500">{mail.date}</p>
                         </td>
-                        <td className="px-6 py-4 max-w-xs">
-                          <p className="font-medium text-gray-800 truncate">{mail.subject}</p>
+                        <td className="px-3 py-3">
+                          <p className="text-xs text-gray-800 leading-snug">{mail.subject}</p>
                           {mail.relatedTo && (
-                             <p className="text-xs text-gray-400 mt-1 flex items-center">
-                               <LinkIcon size={10} className="mr-1" />
+                             <p className="text-[10px] text-gray-400 mt-1 flex items-center">
+                               <LinkIcon size={8} className="mr-1" />
                                Ref: {mail.relatedTo}
                              </p>
                           )}
                           {mail.fileLink && (
-                            <a href={mail.fileLink} target="_blank" rel="noreferrer" className="inline-flex items-center mt-1 text-xs text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
+                            <a href={mail.fileLink} target="_blank" rel="noreferrer" className="inline-flex items-center mt-1 text-[10px] text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>
                               <Paperclip size={10} className="mr-1" />
                               Lampiran
                             </a>
                           )}
                         </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-gray-700">
+                        <td className="px-3 py-3">
+                          <p className="text-xs text-gray-700 leading-snug">
                             {mail.recipient}
                           </p>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-3 whitespace-nowrap">
                            {mail.archiveCode ? (
-                             <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">
+                             <span className="font-mono text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600">
                                {mail.archiveCode}
                              </span>
                            ) : (
-                             <span className="text-xs text-gray-400">-</span>
+                             <span className="text-[10px] text-gray-400">-</span>
                            )}
                         </td>
-                        <td className="px-6 py-4 text-right space-x-2">
-                          <button onClick={() => handleView(mail)} className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Lihat Detail">
-                            <Eye size={18} />
+                        <td className="px-3 py-3 text-right space-x-1 whitespace-nowrap">
+                          <button onClick={() => handleView(mail)} className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Lihat Detail">
+                            <Eye size={16} />
                           </button>
                           
                           {/* Edit available for Everyone */}
-                          <button onClick={() => handleEdit(mail)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
-                            <Edit size={18} />
+                          <button onClick={() => handleEdit(mail)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
+                            <Edit size={16} />
                           </button>
 
                           {/* Delete Restricted to ADMIN */}
                           {user.role === Role.ADMIN && (
-                              <button onClick={() => handleDelete(mail.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
-                                <Trash2 size={18} />
+                              <button onClick={() => handleDelete(mail.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
+                                <Trash2 size={16} />
                               </button>
                           )}
                         </td>
@@ -771,13 +740,11 @@ const App: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Surat</label>
-                  <input 
-                    required 
-                    type="date" 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition-shadow"
-                    value={formData.date}
-                    onChange={e => setFormData({...formData, date: e.target.value})}
+                  <DatePicker 
+                    label="Tanggal Surat"
+                    value={formData.date || ''}
+                    onChange={(newDate) => setFormData({...formData, date: newDate})}
+                    required
                   />
                 </div>
                 <div>
@@ -855,60 +822,84 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Section: File & Keterangan (BARU - DENGAN UPLOAD) */}
+          {/* Section: File & Keterangan (GOOGLE DRIVE INTEGRATION) */}
           <div className="border-t border-gray-100 pt-4">
              <div className="grid grid-cols-1 gap-4">
                 
-                {/* FILE UPLOAD INPUT */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Upload File Digital (Google Drive)</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-brand-400 transition-colors bg-gray-50/50">
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                       <div className="p-3 bg-brand-50 text-brand-500 rounded-full">
-                         <UploadCloud size={24} />
-                       </div>
-                       <div className="text-center">
-                         <label htmlFor="file-upload" className="cursor-pointer font-medium text-brand-600 hover:text-brand-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-500">
-                           <span>Klik untuk upload</span>
-                           <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                         </label>
-                         <span className="text-gray-500 text-xs"> atau drag file kesini</span>
-                       </div>
-                       <p className="text-xs text-gray-400">PDF, JPG, PNG (Max 4MB)</p>
-                    </div>
-                    {selectedFile && (
-                      <div className="mt-4 flex items-center p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <FileText size={20} className="text-brand-500 mr-3" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{selectedFile.name}</p>
-                          <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(0)} KB</p>
-                        </div>
-                        <button type="button" onClick={() => setSelectedFile(null)} className="text-gray-400 hover:text-red-500">
-                          <XIconSmall />
-                        </button>
+                {/* BUTTON DRIVE MANAGER - NEW TAB METHOD */}
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Dokumen Digital</label>
+                  
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+                    <button 
+                      type="button" 
+                      onClick={handleOpenDrive}
+                      className="w-full md:w-auto flex-1 flex items-center justify-center space-x-2 bg-white border border-gray-300 hover:border-brand-500 hover:text-brand-600 text-gray-700 px-4 py-3 rounded-xl transition-all shadow-sm hover:shadow-md group"
+                    >
+                      <div className="bg-green-50 text-green-600 p-2 rounded-lg group-hover:bg-green-100 transition-colors">
+                         <HardDrive size={20} />
                       </div>
-                    )}
-                    {fileError && <p className="text-xs text-red-500 mt-2 text-center font-medium">{fileError}</p>}
+                      <div className="text-left">
+                        <span className="font-bold block text-sm">Buka Google Drive Storage</span>
+                        <span className="text-[10px] text-gray-500 font-normal">Upload file di Tab Baru & Salin Link</span>
+                      </div>
+                      <ExternalLink size={16} className="ml-2 text-gray-400" />
+                    </button>
+                    
+                    {/* Visual Step Guide */}
+                    <div className="hidden md:flex items-center space-x-2 text-xs text-gray-400">
+                        <div className="flex flex-col items-center">
+                            <span className="bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px] text-gray-600">1</span>
+                            <span>Buka</span>
+                        </div>
+                        <div className="w-4 h-[1px] bg-gray-300"></div>
+                        <div className="flex flex-col items-center">
+                            <span className="bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px] text-gray-600">2</span>
+                            <span>Upload</span>
+                        </div>
+                         <div className="w-4 h-[1px] bg-gray-300"></div>
+                        <div className="flex flex-col items-center">
+                            <span className="bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px] text-gray-600">3</span>
+                            <span>Copy Link</span>
+                        </div>
+                         <div className="w-4 h-[1px] bg-gray-300"></div>
+                        <div className="flex flex-col items-center">
+                            <span className="bg-gray-200 rounded-full w-5 h-5 flex items-center justify-center font-bold text-[10px] text-gray-600">4</span>
+                            <span>Paste</span>
+                        </div>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Atau Masukkan Link File (Manual)</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                      <LinkIcon size={14} />
+                {/* URL INPUT - ONLY APPEARS AFTER OPENING DRIVE OR IF LINK EXISTS */}
+                {(hasOpenedDrive || formData.fileLink) && (
+                  <div className="animate-in fade-in slide-in-from-top-4 duration-500 bg-brand-50/50 p-4 rounded-xl border border-brand-100">
+                    <label className="block text-sm font-bold text-brand-700 mb-2 flex items-center">
+                       <LinkIcon size={16} className="mr-2" />
+                       Paste Link File Google Drive Disini
+                    </label>
+                    <div className="relative shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-400">
+                        <Globe size={16} />
+                      </div>
+                      <input 
+                        type="url" 
+                        required
+                        className="w-full pl-10 pr-3 py-3 border-2 border-brand-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-shadow text-sm bg-white text-gray-800 placeholder-gray-400"
+                        value={formData.fileLink}
+                        onChange={e => setFormData({...formData, fileLink: e.target.value})}
+                        placeholder="https://drive.google.com/file/d/..."
+                        autoFocus
+                      />
                     </div>
-                    <input 
-                      type="url" 
-                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition-shadow text-sm"
-                      value={formData.fileLink}
-                      onChange={e => setFormData({...formData, fileLink: e.target.value})}
-                      placeholder="https://..."
-                      readOnly={!!selectedFile} // Readonly if file is selected
-                    />
+                    <div className="flex items-start mt-2 space-x-2">
+                        <AlertTriangle size={12} className="text-amber-500 mt-0.5 shrink-0" />
+                        <p className="text-xs text-gray-500 italic">
+                        Pastikan akses file di Google Drive sudah diatur ke <b>"Anyone with the link" (Siapa saja yang memiliki link)</b> agar file bisa dibuka oleh penerima.
+                        </p>
+                    </div>
                   </div>
-                  {selectedFile && <p className="text-xs text-brand-500 mt-1 italic">*Link akan terisi otomatis setelah file terupload.</p>}
-                </div>
+                )}
                 
                 <div>
                    <label className="block text-sm font-medium text-gray-700 mb-1">Keterangan / Disposisi</label>
@@ -943,7 +934,7 @@ const App: React.FC = () => {
               className="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all flex items-center"
             >
               {isSaving && <Loader2 size={16} className="animate-spin mr-2" />}
-              {isSaving ? (selectedFile ? 'Mengupload...' : 'Menyimpan...') : (editingMail ? 'Perbarui Data' : 'Simpan Arsip')}
+              {isSaving ? 'Menyimpan...' : (editingMail ? 'Perbarui Data' : 'Simpan Arsip')}
             </button>
           </div>
         </form>
@@ -991,29 +982,39 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Description & File Link */}
-            {(viewingMail.description || viewingMail.fileLink) && (
-              <div className="bg-brand-50/50 p-4 rounded-xl border border-brand-100 space-y-3">
-                 {viewingMail.description && (
-                   <div>
-                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Keterangan / Disposisi</h4>
-                      <p className="text-gray-800 text-sm whitespace-pre-wrap">{viewingMail.description}</p>
-                   </div>
-                 )}
-                 {viewingMail.fileLink && (
-                   <div className="pt-2">
-                     <a 
-                       href={viewingMail.fileLink} 
-                       target="_blank" 
-                       rel="noreferrer"
-                       className="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-blue-600 text-sm font-medium hover:bg-blue-50 hover:border-blue-200 transition-colors shadow-sm"
-                     >
-                       <Paperclip size={16} className="mr-2" />
-                       Buka Dokumen Lampiran
-                       <ExternalLink size={14} className="ml-2 opacity-50" />
-                     </a>
-                   </div>
-                 )}
+            {/* Link File Attachment Display - NOW SEPARATE AND PROMINENT */}
+            {viewingMail.fileLink && (
+               <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center space-x-3">
+                     <div className="bg-green-100 p-2 rounded-lg text-green-600">
+                        <Paperclip size={20} />
+                     </div>
+                     <div>
+                        <h4 className="text-sm font-bold text-gray-800">Lampiran Dokumen</h4>
+                        <p className="text-xs text-gray-500 truncate max-w-[200px] sm:max-w-xs">{viewingMail.fileLink}</p>
+                     </div>
+                  </div>
+                  <a 
+                     href={viewingMail.fileLink} 
+                     target="_blank" 
+                     rel="noreferrer"
+                     className="px-4 py-2 bg-white text-green-700 border border-green-200 text-sm font-semibold rounded-lg hover:bg-green-600 hover:text-white hover:border-transparent transition-all shadow-sm flex items-center"
+                  >
+                     <ExternalLink size={16} className="mr-2" />
+                     Buka File
+                  </a>
+               </div>
+            )}
+
+            {/* Description Display */}
+            {viewingMail.description && (
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                 <div>
+                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
+                       <AlignLeft size={14} className="mr-1"/> Keterangan / Disposisi
+                    </h4>
+                    <p className="text-gray-800 text-sm whitespace-pre-wrap leading-relaxed">{viewingMail.description}</p>
+                 </div>
               </div>
             )}
 

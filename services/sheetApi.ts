@@ -3,7 +3,7 @@ import { User, Mail, MailType, Role } from '../types';
 // URL Database Spreadsheet (Google Apps Script Web App URL)
 // GANTI URL DI BAWAH INI DENGAN URL DARI LANGKAH DEPLOY GOOGLE APPS SCRIPT
 // Format URL harus berakhiran '/exec'
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkSCyz9r2WNwOH4XTPWAR1Y_SIVuvqyk0Mxf7iSufn68_0pJipvBP614JZviAEmag0/exec'; 
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxVxbuIY0BPuqwwCH8TvoUI7xQETewLp5LxG__GRGkO9GknafJUoTdOeuL8ua6YfRPS/exec'; 
 
 // Helper function to validate URL
 const isValidScriptUrl = (url: string): boolean => {
@@ -127,7 +127,7 @@ export const sheetApi = {
   },
 
   saveMail: async (mail: Mail, file?: FilePayload): Promise<{ success: boolean; archiveCode?: string; fileLink?: string }> => {
-    if (!isValidScriptUrl(GOOGLE_SCRIPT_URL) || GOOGLE_SCRIPT_URL.includes('PASTE_YOUR')) {
+    if (!isValidScriptUrl(GOOGLE_SCRIPT_URL) || GOOGLE_SCRIPT_URL.includes('https://script.google.com/macros/s/AKfycbxeSrxS9vhoxESS41sk5f_7vk-Ht_yj6Ea0lHDFLi2CtEYURanJODM0G449fI3ZO2fM/exec')) {
       // alert("Mode Demo: Data disimpan sementara di memori browser.");
       return { success: true, archiveCode: mail.archiveCode || 'DEMO-CODE-' + Date.now(), fileLink: file ? 'https://dummy-drive-link.com/file.pdf' : undefined };
     }
@@ -162,7 +162,7 @@ export const sheetApi = {
   },
 
   deleteMail: async (id: string): Promise<boolean> => {
-    if (!isValidScriptUrl(GOOGLE_SCRIPT_URL) || GOOGLE_SCRIPT_URL.includes('PASTE_YOUR')) return true;
+    if (!isValidScriptUrl(GOOGLE_SCRIPT_URL) || GOOGLE_SCRIPT_URL.includes('https://script.google.com/macros/s/AKfycbxeSrxS9vhoxESS41sk5f_7vk-Ht_yj6Ea0lHDFLi2CtEYURanJODM0G449fI3ZO2fM/exec')) return true;
 
     try {
       const res = await fetch(GOOGLE_SCRIPT_URL, {
