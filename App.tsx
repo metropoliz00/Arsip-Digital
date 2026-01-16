@@ -238,7 +238,7 @@ const App: React.FC = () => {
                   className="w-full pl-14 pr-5 py-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-brand-500 outline-none transition-all text-sm font-medium text-gray-700"
                   value={usernameInput}
                   onChange={e => setUsernameInput(e.target.value)}
-                  placeholder="Masukkan username"
+                  placeholder="Username"
                 />
               </div>
             </div>
