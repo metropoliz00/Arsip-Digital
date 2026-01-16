@@ -3,7 +3,7 @@ import { User, Mail, MailType, Role } from '../types';
 // URL Database Spreadsheet (Google Apps Script Web App URL)
 // GANTI URL DI BAWAH INI DENGAN URL DARI LANGKAH DEPLOY GOOGLE APPS SCRIPT
 // Format URL harus berakhiran '/exec'
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzV1C2ihUKeHhrDlLMS5t-aD54ZwZqPL9x-rU_NOrGb9J5lgyt5joNglU5iQuOEq9du/exec'; 
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxO_0oeEb5eRjyIlDEY-ZPO6-MuBy6-XR9L8J5fejhSZ6xdtc1FPy2E1-Cx-FcxRGCk/exec'; 
 
 // Helper function to validate URL
 const isValidScriptUrl = (url: string): boolean => {

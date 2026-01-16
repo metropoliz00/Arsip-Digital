@@ -58,6 +58,9 @@ const App: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [hasOpenedDrive, setHasOpenedDrive] = useState(false);
 
+  // State: Clock
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   const [formData, setFormData] = useState<Partial<Mail>>({
     referenceNumber: '',
     date: new Date().toISOString().split('T')[0],
@@ -70,6 +73,14 @@ const App: React.FC = () => {
     description: ''
   });
 
+  // Clock Effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Current Date Display
   const todayDate = new Date().toLocaleDateString('id-ID', {
     weekday: 'long',
@@ -77,6 +88,14 @@ const App: React.FC = () => {
     month: 'long',
     year: 'numeric'
   });
+
+  // Time Formatter
+  const formattedTime = currentTime.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).replace(/\./g, ':');
 
   useEffect(() => {
     if (user) loadMails();
@@ -329,7 +348,7 @@ const App: React.FC = () => {
                <UserIcon size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-gray-900 truncate">{user.name}</p>
+              <p className="text-[12px] font-bold text-gray-900 truncate">{user.name}</p>
               <p className="text-[10px] font-bold text-brand-600 uppercase tracking-wide">{user.role}</p>
             </div>
           </div>
@@ -373,8 +392,15 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-end space-x-4 flex-none md:w-64">
-            {/* Smart Search Bar */}
-            {currentView !== 'DASHBOARD' && (
+            {/* RIGHT: Clock on Dashboard or Search on other pages */}
+            {currentView === 'DASHBOARD' ? (
+              <div className="hidden md:flex flex-col items-end mr-2 bg-white/60 px-3 py-1 rounded-xl border border-gray-100/50">
+                 <p className="text-2xl font-black text-gray-800 leading-none tracking-tight font-mono">
+                    {formattedTime}
+                 </p>
+                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Waktu Server</p>
+              </div>
+            ) : (
               <div className="relative w-full max-w-[140px] md:max-w-xs group transition-all duration-300">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-500 transition-colors" size={16} />
                 <input 
@@ -409,50 +435,63 @@ const App: React.FC = () => {
                 <StatCard title="Terkini" value={stats.recent} icon={<Clock size={24} />} color="bg-amber-500" />
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
-                {/* Recent Activity List */}
-                <div className="xl:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-6">
+              {/* Main Dashboard Layout */}
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8 min-h-[450px]">
+                
+                {/* Recent Activity List - Proportionally adjusted */}
+                <div className="xl:col-span-2 bg-white rounded-[2rem] shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
+                  <div className="p-6 md:p-8 border-b border-gray-50 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-gray-800 flex items-center"><Clock size={20} className="mr-3 text-brand-600" />Arsip Terbaru</h3>
-                    {user.role === Role.ADMIN && <button onClick={() => handleOpenAdd()} className="text-xs font-bold bg-brand-50 text-brand-700 px-3 py-1.5 rounded-full hover:bg-brand-100 transition-colors">Tambah Baru</button>}
+                    {user.role === Role.ADMIN && <button onClick={() => handleOpenAdd()} className="text-xs font-bold bg-brand-50 text-brand-700 px-4 py-2 rounded-full hover:bg-brand-100 transition-colors">Tambah Baru</button>}
                   </div>
-                  <div className="space-y-3">
+                  
+                  <div className="flex-1 p-6 md:p-8 space-y-3 overflow-y-auto custom-scrollbar">
                     {mails.slice(0, 5).map(mail => (
-                      <div key={mail.id} onClick={() => { setViewingMail(mail); setIsViewModalOpen(true); }} className="p-4 bg-gray-50/50 rounded-2xl hover:bg-white hover:shadow-lg border border-transparent hover:border-gray-100 group flex items-center cursor-pointer active:scale-[0.98] transition-all duration-200">
-                        <div className={`p-3 rounded-xl mr-4 group-hover:scale-110 transition-transform ${mail.type === MailType.INCOMING ? 'bg-blue-100 text-blue-600' : 'bg-indigo-100 text-indigo-600'}`}>
+                      <div key={mail.id} onClick={() => { setViewingMail(mail); setIsViewModalOpen(true); }} className="p-4 rounded-2xl hover:bg-gray-50 border border-transparent hover:border-gray-100 group flex items-center cursor-pointer active:scale-[0.99] transition-all duration-200">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mr-4 shadow-sm transition-transform group-hover:scale-105 shrink-0 ${mail.type === MailType.INCOMING ? 'bg-blue-50 text-blue-600' : 'bg-indigo-50 text-indigo-600'}`}>
                           {mail.type === MailType.INCOMING ? <Inbox size={20} /> : <Send size={20} />}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-800 truncate text-sm">{mail.subject}</p>
-                          <p className="text-[11px] font-semibold text-gray-400 mt-0.5 flex items-center">
-                             <span className="truncate">{mail.recipient}</span>
-                             <span className="mx-1.5">•</span>
-                             <span>{mail.date}</span>
-                          </p>
+                        <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+                          <div className="md:col-span-2">
+                             <p className="font-bold text-gray-800 truncate text-sm mb-0.5">{mail.subject}</p>
+                             <p className="text-[11px] font-medium text-gray-400 flex items-center">
+                                <span className="truncate max-w-[150px]">{mail.recipient}</span>
+                             </p>
+                          </div>
+                          <div className="hidden md:block text-right">
+                             <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100">{mail.date}</span>
+                          </div>
                         </div>
-                        <ChevronRight className="text-gray-300 group-hover:text-brand-600 transition-colors" size={18} />
+                        <ChevronRight className="text-gray-300 group-hover:text-brand-600 transition-colors ml-3" size={18} />
                       </div>
                     ))}
-                    {mails.length === 0 && <div className="text-center py-8 text-gray-400 text-sm font-medium">Belum ada data arsip</div>}
+                    {mails.length === 0 && (
+                      <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm font-medium py-10">
+                        <div className="bg-gray-50 p-4 rounded-full mb-3"><Inbox size={32} className="opacity-20" /></div>
+                        Belum ada data arsip
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Quick Actions (Desktop & Mobile) */}
+                {/* Quick Actions (Desktop & Mobile) - Proportional Height */}
                 {user.role === Role.ADMIN && (
-                  <div className="bg-gradient-to-br from-brand-600 to-indigo-700 p-1 rounded-[2rem] shadow-xl overflow-hidden">
-                    <div className="bg-white h-full rounded-[1.8rem] p-6 md:p-8 relative overflow-hidden flex flex-col justify-center">
-                       <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] pointer-events-none"><Plus size={200} /></div>
-                       <h3 className="text-lg font-bold text-gray-800 mb-6 z-10">Aksi Cepat</h3>
-                       <div className="grid grid-cols-1 gap-4 z-10">
-                         <button onClick={() => handleOpenAdd(MailType.INCOMING)} className="flex items-center p-4 bg-blue-50/50 border border-blue-100 rounded-2xl hover:shadow-lg transition-all active:scale-95 group text-left">
-                           <div className="bg-white p-3 rounded-xl mr-4 shadow-sm group-hover:rotate-12 transition-all text-blue-600"><Inbox size={24} /></div>
-                           <div><p className="font-bold text-gray-800 text-sm">Input Masuk</p><p className="text-[10px] text-gray-500 font-medium">Catat surat diterima</p></div>
-                         </button>
-                         <button onClick={() => handleOpenAdd(MailType.OUTGOING)} className="flex items-center p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl hover:shadow-lg transition-all active:scale-95 group text-left">
-                           <div className="bg-white p-3 rounded-xl mr-4 shadow-sm group-hover:-rotate-12 transition-all text-indigo-600"><Send size={24} /></div>
-                           <div><p className="font-bold text-gray-800 text-sm">Input Keluar</p><p className="text-[10px] text-gray-500 font-medium">Catat surat dikirim</p></div>
-                         </button>
-                       </div>
+                  <div className="h-full flex flex-col">
+                    <div className="bg-gradient-to-br from-brand-600 to-indigo-700 p-1 rounded-[2rem] shadow-xl overflow-hidden flex-1 flex flex-col">
+                      <div className="bg-white flex-1 rounded-[1.8rem] p-6 md:p-8 relative overflow-hidden flex flex-col justify-center">
+                         <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] pointer-events-none"><Plus size={200} /></div>
+                         <h3 className="text-lg font-bold text-gray-800 mb-8 z-10">Aksi Cepat</h3>
+                         <div className="grid grid-cols-1 gap-5 z-10">
+                           <button onClick={() => handleOpenAdd(MailType.INCOMING)} className="flex items-center p-5 bg-blue-50/50 border border-blue-100 rounded-2xl hover:shadow-lg transition-all active:scale-95 group text-left">
+                             <div className="bg-white p-3.5 rounded-xl mr-5 shadow-sm group-hover:rotate-12 transition-all text-blue-600"><Inbox size={26} /></div>
+                             <div><p className="font-bold text-gray-800 text-sm">Input Masuk</p><p className="text-[10px] text-gray-500 font-medium mt-0.5">Catat surat diterima</p></div>
+                           </button>
+                           <button onClick={() => handleOpenAdd(MailType.OUTGOING)} className="flex items-center p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl hover:shadow-lg transition-all active:scale-95 group text-left">
+                             <div className="bg-white p-3.5 rounded-xl mr-5 shadow-sm group-hover:-rotate-12 transition-all text-indigo-600"><Send size={26} /></div>
+                             <div><p className="font-bold text-gray-800 text-sm">Input Keluar</p><p className="text-[10px] text-gray-500 font-medium mt-0.5">Catat surat dikirim</p></div>
+                           </button>
+                         </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -582,18 +621,21 @@ const App: React.FC = () => {
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Perihal / Ringkasan Isi</label>
             <textarea required rows={3} className="w-full px-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-2xl outline-none text-sm transition-all font-medium border" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} placeholder="Jelaskan secara singkat perihal surat..." />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 transition-all duration-300">
+            <div className={`space-y-1.5 ${!hasOpenedDrive ? 'md:col-span-2' : ''} transition-all duration-300`}>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Kode Klasifikasi</label>
               <input type="text" className="w-full px-4 py-3 bg-gray-100 border-transparent rounded-xl text-gray-500 outline-none text-sm font-mono cursor-not-allowed" value={formData.archiveCode} disabled placeholder="Auto-generated" />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Link Dokumen (G-Drive)</label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input type="url" className="w-full pl-10 pr-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-xl outline-none text-sm font-medium border" value={formData.fileLink} onChange={e => setFormData({...formData, fileLink: e.target.value})} placeholder="https://drive.google.com/..." />
-              </div>
-            </div>
+            
+            {hasOpenedDrive && (
+                <div className="space-y-1.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Link Dokumen (G-Drive)</label>
+                <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input type="url" className="w-full pl-10 pr-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-xl outline-none text-sm font-medium border" value={formData.fileLink} onChange={e => setFormData({...formData, fileLink: e.target.value})} placeholder="https://drive.google.com/..." />
+                </div>
+                </div>
+            )}
           </div>
           
            {/* Drive Button in Modal */}
