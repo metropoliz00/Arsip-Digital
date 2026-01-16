@@ -287,14 +287,14 @@ const App: React.FC = () => {
       
       {/* MOBILE DRAWER OVERLAY */}
       <div 
-        className={`fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-all duration-500 ease-in-out md:hidden ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsSidebarOpen(false)}
       />
 
       {/* SIDEBAR NAVIGATION */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-[280px] bg-white flex flex-col shadow-2xl md:shadow-none border-r border-gray-100
-        transform transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+        transform transition-transform duration-500 ease-in-out will-change-transform
         md:relative md:translate-x-0
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
