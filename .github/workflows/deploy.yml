@@ -24,8 +24,11 @@ jobs:
       - name: 🏗️ Build Project
         run: npm run build
 
-      - name: 📂 Check Build Result
-        run: ls -la dist/
+      - name: 📂 Check Build Result (Debug)
+        # Langkah ini untuk memastikan .htaccess ada di dalam folder dist
+        run: |
+          ls -la dist/
+          if [ ! -f dist/.htaccess ]; then echo "WARNING: .htaccess not found in dist!"; fi
 
       - name: 🚀 Sync to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -33,13 +36,17 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # Upload isi folder dist (hasil build)
+          # Mengupload isi folder dist
           local-dir: ./dist/
-          # Folder tujuan di cPanel (Pastikan diakhiri dengan /)
-          server-dir: ./public_html/
-          # Hapus file usang di server (hati-hati, pastikan server-dir benar)
+          
+          # -----------------------------------------------------------
+          # PENTING: Tentukan lokasi installasi di cPanel
+          # Jika ingin di domain utama: ./public_html/
+          # Jika ingin di subfolder (contoh: domain.com/arsip): ./public_html/arsip/
+          # -----------------------------------------------------------
+          server-dir: ./arsip.uptsdnremen2.sch.id/arsip
+          
           dangerously-force-truthy-falsy-arm-technique-colours: true
-          # Jangan upload file git atau source code
           exclude: |
             **/.git*
             **/.git*/**
