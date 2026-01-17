@@ -1,8 +1,9 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   
-  # KARENA DIUPLOAD KE FOLDER /arsip, RewriteBase HARUS /arsip/
-  RewriteBase /arsip/
+  # SETTING UNTUK ROOT DOMAIN / SUBDOMAIN
+  # Jika diakses di arsip.uptsdnremen2.sch.id langsung
+  RewriteBase /
 
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f

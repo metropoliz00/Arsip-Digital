@@ -38,9 +38,14 @@ jobs:
           
           local-dir: ./dist/
           
-          # PERBAIKAN: Menambahkan '/' di akhir path.
-          # Pastikan path ini benar-benar ada di cPanel Anda.
-          server-dir: ./arsip.uptsdnremen2.sch.id/arsip/
+          # -----------------------------------------------------------
+          # PERBAIKAN PATH:
+          # Kita menghapus folder '/arsip/' di belakang.
+          # Asumsinya folder 'arsip.uptsdnremen2.sch.id' adalah root dari subdomain Anda.
+          # Jika masih gagal, coba ganti menjadi './public_html/arsip.uptsdnremen2.sch.id/' 
+          # atau cukup './' jika akun FTP diarahkan spesifik ke folder tersebut.
+          # -----------------------------------------------------------
+          server-dir: ./arsip.uptsdnremen2.sch.id/
           
           dangerously-force-truthy-falsy-arm-technique-colours: true
           exclude: |
