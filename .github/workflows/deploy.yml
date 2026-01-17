@@ -25,7 +25,6 @@ jobs:
         run: npm run build
 
       - name: 📂 Check Build Result (Debug)
-        # Langkah ini untuk memastikan .htaccess ada di dalam folder dist
         run: |
           ls -la dist/
           if [ ! -f dist/.htaccess ]; then echo "WARNING: .htaccess not found in dist!"; fi
@@ -36,15 +35,12 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # Mengupload isi folder dist
+          
           local-dir: ./dist/
           
-          # -----------------------------------------------------------
-          # PENTING: Tentukan lokasi installasi di cPanel
-          # Jika ingin di domain utama: ./public_html/
-          # Jika ingin di subfolder (contoh: domain.com/arsip): ./public_html/arsip/
-          # -----------------------------------------------------------
-          server-dir: ./arsip.uptsdnremen2.sch.id/arsip
+          # PERBAIKAN: Menambahkan '/' di akhir path.
+          # Pastikan path ini benar-benar ada di cPanel Anda.
+          server-dir: ./arsip.uptsdnremen2.sch.id/arsip/
           
           dangerously-force-truthy-falsy-arm-technique-colours: true
           exclude: |

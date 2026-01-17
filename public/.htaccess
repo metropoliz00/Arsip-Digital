@@ -1,9 +1,8 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   
-  # Jika aplikasi ada di subfolder (misal: domain.com/arsip), 
-  # ubah baris di bawah menjadi: RewriteBase /arsip/
-  RewriteBase /
+  # KARENA DIUPLOAD KE FOLDER /arsip, RewriteBase HARUS /arsip/
+  RewriteBase /arsip/
 
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
