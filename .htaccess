@@ -1,3 +1,8 @@
-# File ini telah dipindahkan ke folder /public/.htaccess
-# Hal ini dilakukan agar file ikut terbawa saat proses build Vite.
-# Silakan hapus file ini jika tidak diperlukan lagi.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>

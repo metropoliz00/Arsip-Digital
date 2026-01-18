@@ -1,21 +1,26 @@
-name: Deploy to cPanel
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - name: 🚚 Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 18
           cache: 'npm'
 
       - name: 📦 Install Dependencies
@@ -24,31 +29,11 @@ jobs:
       - name: 🏗️ Build Project
         run: npm run build
 
-      - name: 📂 Check Build Result (Debug)
-        run: |
-          ls -la dist/
-          if [ ! -f dist/.htaccess ]; then echo "WARNING: .htaccess not found in dist!"; fi
-
-      - name: 🚀 Sync to cPanel via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      # Deploy ke GitHub Pages (Branch gh-pages)
+      - name: 🚀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          
-          local-dir: ./dist/
-          
-          # PATH UPDATE: Sesuai permintaan spesifik Anda
-          # Pastikan folder 'arsip.uptsdnremen2.sch.id' sudah dibuat di dalam 'public_html' di cPanel Anda.
-          server-dir: ./public_html/arsip.uptsdnremen2.sch.id/
-          
-          # Upload semua file, bahkan yang tersembunyi (penting untuk .htaccess)
-          dangerously-force-truthy-falsy-arm-technique-colours: true
-          
-          # Jangan abaikan .htaccess dalam dist
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            .env
-            README.md
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          # Opsional: Jika Anda menggunakan custom domain, uncomment baris bawah
+          # cname: arsip.sekolahanda.sch.id
