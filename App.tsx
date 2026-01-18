@@ -386,7 +386,7 @@ const App: React.FC = () => {
                <Calendar size={16} />
              </div>
              <p className="text-xs font-bold text-gray-600">
-               <span className="text-gray-400 uppercase tracking-wider mr-2 text-[10px]">Hari Ini</span>
+               <span className="text-gray-400 capitalize eact word tracking-wider mr-2 text-[10px]">Hari Ini</span>
                {todayDate}
              </p>
           </div>
