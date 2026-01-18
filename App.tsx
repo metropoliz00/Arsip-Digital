@@ -374,9 +374,9 @@ const App: React.FC = () => {
             <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl active:scale-95 shadow-sm">
                <Menu size={20} />
             </button>
-            <h2 className="text-lg md:text-xl font-bold text-gray-800 truncate">
+            <h2 className="text-lg md:text-xxl font-bold text-gray-800 truncate">
                <span className="md:hidden">{currentView === 'DASHBOARD' ? 'Dasbor' : currentView === 'INCOMING' ? 'Masuk' : 'Keluar'}</span>
-               <span className="hidden md:inline">{currentView === 'DASHBOARD' ? 'Dasbor Eksekutif' : currentView === 'INCOMING' ? 'Arsip Surat Masuk' : 'Arsip Surat Keluar'}</span>
+               <span className="hidden md:inline">{currentView === 'DASHBOARD' ? 'Dasbor Utama' : currentView === 'INCOMING' ? 'Arsip Surat Masuk' : 'Arsip Surat Keluar'}</span>
             </h2>
           </div>
 
@@ -398,7 +398,7 @@ const App: React.FC = () => {
                  <p className="text-2xl font-black text-gray-800 leading-none tracking-tight font-mono">
                     {formattedTime}
                  </p>
-                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Waktu Server</p>
+                 <p className="text-[10px] font-bold text-gray-400 capitalize eact word tracking-widest mt-0.5">Waktu Server</p>
               </div>
             ) : (
               <div className="relative w-full max-w-[140px] md:max-w-xs group transition-all duration-300">
@@ -422,7 +422,7 @@ const App: React.FC = () => {
           {isLoadingData && (
              <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur text-white px-5 py-2.5 rounded-full shadow-2xl flex items-center space-x-3 z-50 animate-in fade-in zoom-in-95 duration-300">
                 <Loader2 size={16} className="animate-spin text-brand-400" />
-                <span className="text-xs font-bold tracking-wide">SINKRON DATA...</span>
+                <span className="text-xs font-bold tracking-wide">Sinkron Data...</span>
              </div>
           )}
 
@@ -480,7 +480,7 @@ const App: React.FC = () => {
                     <div className="bg-gradient-to-br from-brand-600 to-indigo-700 p-1 rounded-[2rem] shadow-xl overflow-hidden flex-1 flex flex-col">
                       <div className="bg-white flex-1 rounded-[1.8rem] p-6 md:p-8 relative overflow-hidden flex flex-col justify-center">
                          <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] pointer-events-none"><Plus size={200} /></div>
-                         <h3 className="text-lg font-bold text-gray-800 mb-8 z-10">Aksi Cepat</h3>
+                         <h3 className="text-lg font-bold text-gray-800 mb-8 z-10">Aksi</h3>
                          <div className="grid grid-cols-1 gap-5 z-10">
                            <button onClick={() => handleOpenAdd(MailType.INCOMING)} className="flex items-center p-5 bg-blue-50/50 border border-blue-100 rounded-2xl hover:shadow-lg transition-all active:scale-95 group text-left">
                              <div className="bg-white p-3.5 rounded-xl mr-5 shadow-sm group-hover:rotate-12 transition-all text-blue-600"><Inbox size={26} /></div>
@@ -610,16 +610,16 @@ const App: React.FC = () => {
             <DatePicker label="Tanggal Surat" value={formData.date || ''} onChange={val => setFormData({...formData, date: val})} required />
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Nomor Surat</label>
-              <input required type="text" className="w-full px-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-xl outline-none text-sm transition-all font-medium border" value={formData.referenceNumber} onChange={e => setFormData({...formData, referenceNumber: e.target.value})} placeholder="Contoh: 005/SD/2026" />
+              <input required type="text" className="w-full px-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-xl outline-none text-sm transition-all font-medium border" value={formData.referenceNumber} onChange={e => setFormData({...formData, referenceNumber: e.target.value})} placeholder="No Surat" />
             </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">{formData.type === MailType.INCOMING ? 'Diterima Dari' : 'Dikirim Kepada'}</label>
-            <input required type="text" className="w-full px-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-xl outline-none text-sm transition-all font-medium border" value={formData.recipient} onChange={e => setFormData({...formData, recipient: e.target.value})} placeholder="Instansi / Nama Terkait" />
+            <input required type="text" className="w-full px-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-xl outline-none text-sm transition-all font-medium border" value={formData.recipient} onChange={e => setFormData({...formData, recipient: e.target.value})} placeholder="Instansi" />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Perihal / Ringkasan Isi</label>
-            <textarea required rows={3} className="w-full px-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-2xl outline-none text-sm transition-all font-medium border" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} placeholder="Jelaskan secara singkat perihal surat..." />
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Perihal</label>
+            <textarea required rows={3} className="w-full px-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-2xl outline-none text-sm transition-all font-medium border" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} placeholder="Perihal" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 transition-all duration-300">
             <div className={`space-y-1.5 ${!hasOpenedDrive ? 'md:col-span-2' : ''} transition-all duration-300`}>
@@ -629,10 +629,10 @@ const App: React.FC = () => {
             
             {hasOpenedDrive && (
                 <div className="space-y-1.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Link Dokumen (G-Drive)</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Link Dokumen</label>
                 <div className="relative">
                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <input type="url" className="w-full pl-10 pr-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-xl outline-none text-sm font-medium border" value={formData.fileLink} onChange={e => setFormData({...formData, fileLink: e.target.value})} placeholder="https://drive.google.com/..." />
+                    <input type="url" className="w-full pl-10 pr-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 rounded-xl outline-none text-sm font-medium border" value={formData.fileLink} onChange={e => setFormData({...formData, fileLink: e.target.value})} placeholder="Input Link" />
                 </div>
                 </div>
             )}
@@ -687,7 +687,7 @@ const App: React.FC = () => {
                   <div className="bg-white p-3 rounded-2xl text-emerald-600 shadow-sm shrink-0"><Paperclip size={24} /></div>
                   <div className="min-w-0">
                     <p className="font-black text-emerald-900 text-sm truncate">File Lampiran</p>
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase">Dokumen Digital Tersedia</p>
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase">Arsip Digital Tersedia</p>
                   </div>
                 </div>
                 <a href={viewingMail.fileLink} target="_blank" rel="noreferrer" className="w-full sm:w-auto bg-white text-emerald-700 px-6 py-3.5 rounded-xl font-bold text-xs shadow-sm hover:shadow-md transition-all flex items-center justify-center active:scale-95 border border-emerald-100 group">
