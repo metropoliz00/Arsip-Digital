@@ -305,7 +305,7 @@ const App: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-none">Arsip Digital</h1>
-              <p className="text-[10px] font-bold text-brand-600 mt-1 uppercase tracking-wider">UPT SD Negeri Remen 2</p>
+              <p className="text-[8 px] font-bold text-brand-600 mt-1 uppercase tracking-wider">UPT SD Negeri Remen 2</p>
             </div>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-gray-400 hover:bg-gray-50 rounded-full">
