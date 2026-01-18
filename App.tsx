@@ -264,7 +264,7 @@ const App: React.FC = () => {
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-2xl shadow-xl shadow-gray-900/20 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center space-x-2 mt-4"
+              className="w-full bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-500 hover:to-blue-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-blue-500/30 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center space-x-2 mt-4"
             >
               {isLoggingIn ? <Loader2 size={20} className="animate-spin" /> : <><LogIn size={20} /><span>Masuk Dashboard</span></>}
             </button>
