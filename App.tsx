@@ -224,7 +224,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <h2 className="text-3xl font-bold text-gray-800 tracking-tight">Arsip Digital</h2>
-            <p className="text-brand-600 font-bold text-xs mt-2 uppercase tracking-widest bg-brand-50 px-3 py-1 rounded-full">UPT SD Negeri Remen 2</p>
+            <p className="text-brand-600 font-bold text-s mt-2 uppercase tracking-widest bg-brand-50 px-3 py-1 rounded-full">UPT SD Negeri Remen 2</p>
           </div>
           
           <form onSubmit={handleLogin} className="space-y-5">
@@ -305,7 +305,7 @@ const App: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-none">Arsip Digital</h1>
-              <p className="text-[8 px] font-bold text-brand-600 mt-1 uppercase tracking-wider">UPT SD Negeri Remen 2</p>
+              <p className="text-[8px] font-bold text-brand-600 mt-1 uppercase tracking-wider">UPT SD Negeri Remen 2</p>
             </div>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-gray-400 hover:bg-gray-50 rounded-full">
