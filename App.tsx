@@ -384,8 +384,8 @@ const App: React.FC = () => {
                <UserIcon size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-[12px] font-bold text-gray-900 truncate">{user.name}</p>
-              <p className="text-[10px] font-bold text-brand-600 uppercase tracking-wide">{user.role}</p>
+              <p className="text-[7px] font-bold text-gray-900 truncate">{user.name}</p>
+              <p className="text-[9px] font-bold text-brand-600 uppercase tracking-wide">{user.role}</p>
             </div>
           </div>
           <button onClick={handleLogout} className="w-full flex items-center justify-center space-x-2 bg-white border border-gray-200 text-gray-600 py-3 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all font-bold text-sm shadow-sm active:scale-95">
