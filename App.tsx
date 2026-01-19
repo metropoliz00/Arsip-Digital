@@ -672,7 +672,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100"><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Entitas</p><p className="font-bold text-gray-800 text-sm">{viewingMail.recipient}</p></div>
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100"><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Identitas Pengirim/Penerima</p><p className="font-bold text-gray-800 text-sm">{viewingMail.recipient}</p></div>
               <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100"><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Kode Arsip</p><p className="font-mono font-bold text-brand-600 text-sm">{viewingMail.archiveCode || '-'}</p></div>
             </div>
             {viewingMail.description && (
