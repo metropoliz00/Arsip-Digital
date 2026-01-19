@@ -97,6 +97,16 @@ const App: React.FC = () => {
       localStorage.removeItem('arsip_current_user');
     }
   }, [user]);
+  
+  // 3. Update Judul Tab Browser sesuai Nama User
+  useEffect(() => {
+    if (user) {
+      document.title = `${user.name} | Arsip Digital`;
+    } else {
+      document.title = 'Arsip | Digital';
+    }
+  }, [user]);
+
   // --- END SESSION PERSISTENCE ---
 
   // Clock Effect
