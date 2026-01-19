@@ -73,6 +73,32 @@ const App: React.FC = () => {
     description: ''
   });
 
+  // --- SESSION PERSISTENCE (Memantau perubahan currentUser) ---
+  
+  // 1. Load User dari LocalStorage saat aplikasi dimuat
+  useEffect(() => {
+    const savedUser = localStorage.getItem('arsip_current_user');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+      } catch (e) {
+        console.error("Session Corrupted", e);
+        localStorage.removeItem('arsip_current_user');
+      }
+    }
+  }, []);
+
+  // 2. Pantau perubahan 'user' untuk menyimpan/menghapus sesi
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('arsip_current_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('arsip_current_user');
+    }
+  }, [user]);
+  // --- END SESSION PERSISTENCE ---
+
   // Clock Effect
   useEffect(() => {
     const timer = setInterval(() => {
@@ -348,8 +374,8 @@ const App: React.FC = () => {
                <UserIcon size={20} />
             </div>
             <div className="min-w-0">
-              <p className="text-[7px] font-bold text-gray-900 truncate">{user.name}</p>
-              <p className="text-[9px] font-bold text-brand-600 uppercase tracking-wide">{user.role}</p>
+              <p className="text-[12px] font-bold text-gray-900 truncate">{user.name}</p>
+              <p className="text-[10px] font-bold text-brand-600 uppercase tracking-wide">{user.role}</p>
             </div>
           </div>
           <button onClick={handleLogout} className="w-full flex items-center justify-center space-x-2 bg-white border border-gray-200 text-gray-600 py-3 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all font-bold text-sm shadow-sm active:scale-95">
@@ -376,7 +402,7 @@ const App: React.FC = () => {
             </button>
             <h2 className="text-lg md:text-xl font-bold text-gray-800 truncate">
                <span className="md:hidden">{currentView === 'DASHBOARD' ? 'Dasbor' : currentView === 'INCOMING' ? 'Masuk' : 'Keluar'}</span>
-               <span className="hidden md:inline">{currentView === 'DASHBOARD' ? 'Dasbor Utama' : currentView === 'INCOMING' ? 'Arsip Surat Masuk' : 'Arsip Surat Keluar'}</span>
+               <span className="hidden md:inline">{currentView === 'DASHBOARD' ? 'Dasbor Eksekutif' : currentView === 'INCOMING' ? 'Arsip Surat Masuk' : 'Arsip Surat Keluar'}</span>
             </h2>
           </div>
 
@@ -386,7 +412,7 @@ const App: React.FC = () => {
                <Calendar size={16} />
              </div>
              <p className="text-xs font-bold text-gray-600">
-               <span className="text-gray-400 Sentence case tracking-wider mr-2 text-[10px]">Hari Ini</span>
+               <span className="text-gray-400 uppercase tracking-wider mr-2 text-[10px]">Hari Ini</span>
                {todayDate}
              </p>
           </div>
@@ -398,7 +424,7 @@ const App: React.FC = () => {
                  <p className="text-2xl font-black text-gray-800 leading-none tracking-tight font-mono">
                     {formattedTime}
                  </p>
-                 <p className="text-[9px] font-bold text-gray-400 Sentence case tracking-widest mt-0.5">Waktu Server</p>
+                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Waktu Server</p>
               </div>
             ) : (
               <div className="relative w-full max-w-[140px] md:max-w-xs group transition-all duration-300">
@@ -422,7 +448,7 @@ const App: React.FC = () => {
           {isLoadingData && (
              <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur text-white px-5 py-2.5 rounded-full shadow-2xl flex items-center space-x-3 z-50 animate-in fade-in zoom-in-95 duration-300">
                 <Loader2 size={16} className="animate-spin text-brand-400" />
-                <span className="text-xs font-bold tracking-wide">Sinkron Data...</span>
+                <span className="text-xs font-bold tracking-wide">SINKRON DATA...</span>
              </div>
           )}
 
@@ -672,7 +698,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100"><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Identitas Pengirim/Penerima</p><p className="font-bold text-gray-800 text-sm">{viewingMail.recipient}</p></div>
+              <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100"><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Entitas</p><p className="font-bold text-gray-800 text-sm">{viewingMail.recipient}</p></div>
               <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100"><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Kode Arsip</p><p className="font-mono font-bold text-brand-600 text-sm">{viewingMail.archiveCode || '-'}</p></div>
             </div>
             {viewingMail.description && (
