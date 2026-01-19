@@ -376,7 +376,7 @@ const App: React.FC = () => {
             </button>
             <h2 className="text-lg md:text-xl font-bold text-gray-800 truncate">
                <span className="md:hidden">{currentView === 'DASHBOARD' ? 'Dasbor' : currentView === 'INCOMING' ? 'Masuk' : 'Keluar'}</span>
-               <span className="hidden md:inline">{currentView === 'DASHBOARD' ? 'Dasbor Eksekutif' : currentView === 'INCOMING' ? 'Arsip Surat Masuk' : 'Arsip Surat Keluar'}</span>
+               <span className="hidden md:inline">{currentView === 'DASHBOARD' ? 'Dasbor Utama' : currentView === 'INCOMING' ? 'Arsip Surat Masuk' : 'Arsip Surat Keluar'}</span>
             </h2>
           </div>
 
@@ -386,7 +386,7 @@ const App: React.FC = () => {
                <Calendar size={16} />
              </div>
              <p className="text-xs font-bold text-gray-600">
-               <span className="text-gray-400 uppercase tracking-wider mr-2 text-[10px]">Hari Ini</span>
+               <span className="text-gray-400 Sentence case tracking-wider mr-2 text-[10px]">Hari Ini</span>
                {todayDate}
              </p>
           </div>
@@ -398,7 +398,7 @@ const App: React.FC = () => {
                  <p className="text-2xl font-black text-gray-800 leading-none tracking-tight font-mono">
                     {formattedTime}
                  </p>
-                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Waktu Server</p>
+                 <p className="text-[9px] font-bold text-gray-400 Sentence case tracking-widest mt-0.5">Waktu Server</p>
               </div>
             ) : (
               <div className="relative w-full max-w-[140px] md:max-w-xs group transition-all duration-300">
